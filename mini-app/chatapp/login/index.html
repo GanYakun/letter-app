@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>登录 - Letter</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Helvetica Neue", sans-serif;
+      overflow-y: hidden;
+      /* 去掉垂直滚动条 */
+      height: 100vh;
+    }
+
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: white;
+    }
+
+    .login-box {
+      width: 300px;
+      padding: 24px;
+      background-color: white;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .login-box h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 10px;
+      background-color: #00bfa5;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .login-box button:hover {
+      background-color: #009688;
+    }
+
+    .switch-mode {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #00bfa5;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="login" class="login-container">
+    <div class="login-box">
+      <!-- 登录表单 -->
+      <div v-if="mode === 'login'">
+        <h2>欢迎回来</h2>
+        <input type="text" v-model="username" placeholder="用户名" autofocus />
+        <input type="password" v-model="password" placeholder="密码" @keyup.enter="login" />
+        <button @click="login">登录</button>
+        <div class="switch-mode" @click="toggleMode">没有账号？去注册</div>
+      </div>
+
+      <!-- 注册表单 -->
+      <div v-else>
+        <h2>欢迎注册</h2>
+        <input type="text" v-model="newUsername" placeholder="请输入用户名" autofocus />
+        <input type="password" v-model="newPassword" placeholder="请输入密码" />
+        <input type="password" v-model="confirmPassword" placeholder="确认密码" @keyup.enter="register" />
+        <button @click="register">下一步</button>
+        <div class="switch-mode" @click="toggleMode">已有账号？去登录</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 引入 Vue 和 ipcRenderer -->
+  <script src="../../vue.js"></script>
+  <script src="../../../node_modules/axios/dist/axios.min.js"></script>
+  <script>
+    new Vue({
+      el: '#login',
+      data: {
+        mode: 'login', // login / register
+        username: '',
+        password: '',
+        newUsername: '',
+        newPassword: '',
+        confirmPassword: ''
+      },
+      methods: {
+        toggleMode() {
+          this.mode = this.mode === 'login' ? 'register' : 'login';
+        },
+        login() {
+          if (this.username && this.password) {
+            axios({
+              method: 'post',
+              url: 'http://localhost:8083/auth/login',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              data: {
+                username: this.username,
+                password: this.password,
+              }
+            }).then((res) => {
+              console.log("res", res)
+              if (res.data.code === 200) {
+                alert('登录成功');
+                window.electronAPI.loginSuccess(this.username)
+              } else {
+                alert('登录失败');
+              }
+            })
+            
+          } else {
+            alert('请输入用户名和密码');
+          }
+        },
+        register() {
+          if (!this.newUsername || !this.newPassword || !this.confirmPassword) {
+            alert('请填写所有字段');
+            return;
+          }
+
+          if (this.newPassword !== this.confirmPassword) {
+            alert('两次输入的密码不一致');
+            return;
+          }
+
+          axios({
+            method: 'post',
+            url: 'http://localhost:8083/auth/user/add',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            data: {
+              userLoginId: this.newUsername,
+              currentPassword: this.newPassword,
+            }
+
+          }).then((res) => {
+            console.log("res", res)
+            if (res.data.code === 200) {
+              // alert('注册成功');
+              window.location.href = './profile.html?username=' + this.newUsername; // Redirect to profile page
+              this.mode = 'login';
+            } else {
+              alert('注册失败');
+            }
+          })
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

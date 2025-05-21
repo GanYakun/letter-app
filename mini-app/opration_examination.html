@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>试卷模板生成器</title>
+  <script src="./vue.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+    #app {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      padding: 24px;
+      width: 750px;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    .category-tabs, .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .category-tabs label, .tabs label {
+      display: flex;
+      align-items: center;
+      background-color: #e0e0e0;
+      border-radius: 6px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .category-tabs input[type="checkbox"],
+    .tabs input[type="checkbox"] {
+      margin-right: 6px;
+    }
+    .tabs button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #e0e0e0;
+      cursor: pointer;
+    }
+    .tabs button.active {
+      background-color: #10a37f;
+      color: white;
+    }
+    .checkboxes {
+      margin-bottom: 16px;
+    }
+    .checkboxes label {
+      margin-right: 16px;
+      display: inline-block;
+    }
+    .checkboxes input[type="number"] {
+      width: 60px;
+      margin-left: 8px;
+    }
+    .chat {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      background: #fafafa;
+      height: 120px;
+      overflow-y: auto;
+    }
+    .input-area {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .input-area button {
+      background: #10a37f;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .download-link {
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <h2>📘 试卷出题助手</h2>
+
+  <!-- 分类多选 -->
+  <div class="category-tabs">
+    <label><input type="checkbox" value="comprehensive" v-model="selectedCategories"> 综合类</label>
+    <label><input type="checkbox" value="professional" v-model="selectedCategories"> 专业类</label>
+  </div>
+
+  <!-- 子类多选 -->
+  <div class="tabs">
+    <template v-for="(subs, cat) in subCategories" v-if="selectedCategories.includes(cat)">
+      <template v-for="sub in subs">
+        <label><input type="checkbox" :value="sub" v-model="selectedSubs"> {{ sub }}</label>
+      </template>
+    </template>
+  </div>
+
+  <!-- 题型选择 -->
+  <div class="tabs">
+    <button :class="{active: tab === 'objective'}" @click="tab = 'objective'">客观题</button>
+    <button :class="{active: tab === 'subjective'}" @click="tab = 'subjective'">主观题</button>
+  </div>
+
+  <div class="checkboxes">
+    <template v-if="tab === 'objective'">
+      <label v-for="type in objectiveTypes" :key="type">
+        <input type="checkbox" :value="type" v-model="selectedTypes"> {{ type }}
+        <input v-if="selectedTypes.includes(type)" type="number" v-model.number="questionCounts[type]" min="1" placeholder="数量">
+      </label>
+    </template>
+    <template v-else>
+      <label v-for="type in subjectiveTypes" :key="type">
+        <input type="checkbox" :value="type" v-model="selectedTypes"> {{ type }}
+        <input v-if="selectedTypes.includes(type)" type="number" v-model.number="questionCounts[type]" min="1" placeholder="数量">
+      </label>
+    </template>
+  </div>
+
+  <!-- 聊天对话显示 -->
+  <div class="chat">
+    <div v-if="messages.length === 0">请输入你想要的试卷说明，例如“生成一份纪检类单选题试卷”</div>
+    <div v-for="(msg, i) in messages" :key="i">👉 {{ msg }}</div>
+  </div>
+
+  <!-- 输入框 -->
+  <div class="input-area">
+    <input v-model="userInput" placeholder="请输入你的出题要求..." @keyup.enter="handleGenerate">
+    <button @click="handleGenerate">生成</button>
+  </div>
+
+  <!-- 下载链接 -->
+  <div class="download-link" v-if="docUrl">
+    📄 <a :href="docUrl" download="试卷模板.doc">点击下载生成的试卷模板</a>
+  </div>
+</div>
+
+<script>
+new Vue({
+  el: '#app',
+  data: {
+    selectedCategories: [],
+    subCategories: {
+      comprehensive: ['党建', '纪检', '行测'],
+      professional: ['专业基础知识', '专业管理要求']
+    },
+    selectedSubs: [],
+    tab: 'objective',
+    selectedTypes: [],
+    objectiveTypes: ['单选题', '多选题', '判断题'],
+    subjectiveTypes: ['简答题', '问答题', '论述题'],
+    questionCounts: {},
+    userInput: '',
+    messages: [],
+    docUrl: ''
+  },
+  methods: {
+    handleGenerate() {
+      if (!this.userInput.trim()) return;
+
+      const categoryNames = this.selectedCategories.map(cat => cat === 'comprehensive' ? '综合类' : '专业类').join('、') || '（未选择分类）';
+      const subs = this.selectedSubs.join('、') || '（未选择子类）';
+      const typeList = this.selectedTypes.map(t => `${t}（${this.questionCounts[t] || 0}题）`).join('，') || '（未选择题型）';
+
+      const fullMessage = `你选择了【${categoryNames}】 > 【${subs}】，题型为：${typeList}。\n请求：“${this.userInput}”`;
+      this.messages.push(fullMessage);
+
+      const wordContent = this.generateQuestions();
+      this.generateWord(wordContent);
+      this.userInput = '';
+    },
+    generateQuestions() {
+      const catNames = this.selectedCategories.map(cat => cat === 'comprehensive' ? '综合类' : '专业类').join('、') || '（未选择分类）';
+      const subs = this.selectedSubs.join('、') || '（未选择子类）';
+      let content = `类别：${catNames} > ${subs}\n题型：${this.selectedTypes.map(t => `${t}（${this.questionCounts[t] || 0}题）`).join('，')}\n\n`;
+
+      this.selectedTypes.forEach((type) => {
+        const count = this.questionCounts[type] || 3;
+        content += `【${type}】\n`;
+        for (let i = 1; i <= count; i++) {
+          content += `${i}. 请编写一个${type} 示例题目。\n`;
+        }
+        content += '\n';
+      });
+
+      return content || '未选择任何题型';
+    },
+    generateWord(content) {
+      const html = `
+        <html><head><meta charset="utf-8"></head>
+        <body>
+          <h2>试卷模板</h2>
+          <pre>${content}</pre>
+        </body></html>`;
+      const blob = new Blob(['\ufeff' + html], {
+        type: 'application/msword'
+      });
+      this.docUrl = URL.createObjectURL(blob);
+    }
+  }
+});
+</script>
+</body>
+</html>

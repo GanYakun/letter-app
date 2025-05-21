@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>完善信息 - Letter</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", sans-serif;
+            overflow-y: hidden;
+            height: 100vh;
+        }
+
+        .profile-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: white;
+        }
+
+        .profile-box {
+            width: 350px;
+            padding: 24px;
+            background-color: white;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .profile-box h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .profile-box input,
+        .profile-box select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .profile-box button {
+            width: 100%;
+            padding: 10px;
+            background-color: #00bfa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .profile-box button:hover {
+            background-color: #009688;
+        }
+
+        .avatar-upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .avatar-preview,
+        .avatar-placeholder {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #888;
+            overflow: hidden;
+            border: 2px dashed #ccc;
+            transition: border-color 0.3s;
+        }
+
+        .avatar-preview {
+            object-fit: cover;
+        }
+
+        .avatar-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #c0c0c0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #888;
+            overflow: hidden;
+            border: 2px dashed #ccc;
+            transition: border-color 0.3s;
+        }
+
+        .camera-icon {
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="profile" class="profile-container">
+        <div class="profile-box">
+            <!-- <h2>完善个人信息</h2> -->
+
+            <!-- 头像上传区域 -->
+            <div style="margin-bottom: 20px;">
+                <div class="avatar-upload">
+                    <img v-if="avatarPreview" :src="avatarPreview" alt="头像预览" class="avatar-preview" />
+                    <div v-else class="avatar-placeholder">
+                        <span class="camera-icon">📷</span>
+                    </div>
+                    <input type="file" @change="uploadAvatar" accept="image/*" />
+                </div>
+            </div>
+
+            <input type="text" v-model="username" placeholder="用户名" autofocus />
+            <select v-model="gender">
+                <option value="" disabled selected>请选择性别</option>
+                <option value="male">男</option>
+                <option value="female">女</option>
+            </select>
+            <button @click="submitProfile">提交</button>
+        </div>
+    </div>
+
+    <!-- 引入 Vue -->
+    <script src="../../vue.js"></script>
+    <script src="../../../node_modules/axios/dist/axios.min.js"></script>
+    <script>
+        new Vue({
+            el: '#profile',
+            data: {
+                username: '',
+                gender: '',
+                avatar: null,
+                avatarPreview: null // 新增用于头像预览
+            },
+            methods: {
+                uploadAvatar(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.avatar = file;
+                        this.avatarPreview = URL.createObjectURL(file); // 创建本地预览链接
+                        // 使用 FileReader 读取为二进制
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            this.avatarBinary = reader.result; // result 是 ArrayBuffer
+                        };
+                        reader.readAsArrayBuffer(file);
+                    }
+                },
+                submitProfile() {
+                    if (!this.username || !this.gender || !this.avatar) {
+                        alert('请填写所有字段');
+                        return;
+                    }
+
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const userLoginId = urlParams.get('username');
+                    // 构造请求体为 Blob（二进制）
+                    const blob = new Blob([this.avatarBinary], { type: 'application/octet-stream' });
+                    const url = `http://localhost:8083/auth/party/add?partyName=${encodeURIComponent(this.username)}&sex=${encodeURIComponent(this.gender)}&createdByUserLogin=${encodeURIComponent(userLoginId)}`;
+                    console.log("avatar:", this.avatar)
+                    // Example: Upload user profile (avatar, username, gender)
+                    const formData = new FormData();
+                    formData.append('partyName', this.username);
+                    formData.append('sex', this.gender);
+                    formData.append('personalPhoto', this.avatar);
+                    formData.append('createdByUserLogin', userLoginId);
+
+
+                    axios.post(url, blob, {
+                        headers: {
+                            'Content-Type': 'application/octet-stream'
+                        }
+                    })
+                        .then((res) => {
+                            console.log("res", res);
+                            if (res.data.code === 200) {
+                                alert('信息提交成功');
+                                window.location.href = "./index.html";
+                            } else {
+                                alert('信息提交失败');
+                            }
+                        });
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
