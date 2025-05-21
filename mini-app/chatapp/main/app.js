@@ -3,6 +3,11 @@
 new Vue({
   el: '#app',
   data: {
+    showProfileCard: false,
+    cardTop: 0,
+    cardLeft: 0,
+    showZoomedImage: false,
+    zoomedImageUrl: null,
     newMessage: '',
     myAvatar: null,
     contacts: [
@@ -45,6 +50,50 @@ new Vue({
     }
   },
   methods: {
+    // 开始与用户聊天
+    startChatWithUser() {
+      // 示例：选择第一个联系人作为聊天对象
+      const targetContact = this.contacts[0]; // 你可以根据实际逻辑选择目标联系人
+
+      if (targetContact) {
+        this.currentContact = targetContact;
+        this.showProfileCard = false; // 关闭卡片
+        this.$nextTick(() => this.scrollToBottom());
+      }
+    },
+    // 新增：点击卡片中头像后放大显示
+    zoomAvatar(url) {
+      this.zoomedImageUrl = url;
+      this.showZoomedImage = true;
+    },
+
+    // 关闭放大视图
+    closeZoom() {
+      this.showZoomedImage = false;
+      this.zoomedImageUrl = null;
+    },
+    showProfileCardAt(event) {
+      // 获取鼠标点击的屏幕坐标 + 页面滚动距离
+      const mouseX = event.clientX + window.scrollX;
+      const mouseY = event.clientY + window.scrollY;
+
+      // 设置卡片的位置为鼠标点击位置（可加偏移量）
+      const offsetX = 10; // 横向偏移
+      const offsetY = 10; // 纵向偏移
+
+      this.cardLeft = mouseX + offsetX;
+      this.cardTop = mouseY + offsetY;
+
+      this.showProfileCard = true;
+      event.stopPropagation(); // 防止触发外部点击关闭
+    },
+    handleClickOutside(e) {
+      const card = document.getElementById('profile-card');
+      if (card && !card.contains(e.target)) {
+        this.showProfileCard = false;
+      }
+    },
+
     selectContact(contact) {
       this.currentContact = contact;
       this.$nextTick(() => this.scrollToBottom());
@@ -93,8 +142,14 @@ new Vue({
     }
   },
   mounted() {
+    document.addEventListener('click', this.handleClickOutside);
     this.currentContact = this.contacts[0]; // 默认选中第一个联系人
     this.scrollToBottom();
     this.avatarReq();
+
+  },
+  beforeDestroy() {
+    // Vue 2 使用 beforeDestroy，Vue 3 使用 beforeUnmount
+    document.removeEventListener('click', this.handleClickOutside);
   }
 });
