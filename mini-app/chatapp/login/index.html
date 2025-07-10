@@ -4,27 +4,28 @@
 <head>
   <meta charset="UTF-8" />
   <title>登录 - Letter</title>
-  <link rel="stylesheet" href="../style.css" />
   <style>
+    html,
     body {
+      height: 100%;
       margin: 0;
       padding: 0;
       font-family: "Helvetica Neue", sans-serif;
       overflow-y: hidden;
       /* 去掉垂直滚动条 */
-      height: 100vh;
     }
 
     .login-container {
+      height: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
       background-color: white;
     }
 
     .login-box {
-      width: 300px;
+      width: 100%;
+      height: 100%;
       padding: 24px;
       background-color: white;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -38,7 +39,7 @@
     }
 
     .login-box input {
-      width: 100%;
+      width: 90%;
       padding: 10px;
       margin: 10px 0;
       border: 1px solid #ccc;
@@ -47,7 +48,7 @@
     }
 
     .login-box button {
-      width: 100%;
+      width: 90%;
       padding: 10px;
       background-color: #00bfa5;
       color: white;
@@ -68,6 +69,22 @@
       color: #00bfa5;
       cursor: pointer;
     }
+
+    .avatar-preview {
+
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px auto;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   </style>
 </head>
 
@@ -75,9 +92,15 @@
   <div id="login" class="login-container">
     <div class="login-box">
       <!-- 登录表单 -->
-      <div v-if="mode === 'login'">
-        <h2>欢迎回来</h2>
-        <input type="text" v-model="username" placeholder="用户名" autofocus />
+      <div v-if="mode === 'login'" style="padding-top: 25px;">
+        <!-- <h3>欢迎回来</h3> -->
+
+        <!-- 新增：用户头像 -->
+        <div class="avatar-preview">
+          <img :src="avatarUrl" alt="用户头像" class="login-avatar" />
+        </div>
+
+        <input type="text" v-model="username" placeholder="账号" autofocus @blur="onUsernameBlur" />
         <input type="password" v-model="password" placeholder="密码" @keyup.enter="login" />
         <button @click="login">登录</button>
         <div class="switch-mode" @click="toggleMode">没有账号？去注册</div>
@@ -86,7 +109,7 @@
       <!-- 注册表单 -->
       <div v-else>
         <h2>欢迎注册</h2>
-        <input type="text" v-model="newUsername" placeholder="请输入用户名" autofocus />
+        <input type="text" v-model="newUsername" placeholder="请输入账号" autofocus />
         <input type="password" v-model="newPassword" placeholder="请输入密码" />
         <input type="password" v-model="confirmPassword" placeholder="确认密码" @keyup.enter="register" />
         <button @click="register">下一步</button>
@@ -107,37 +130,66 @@
         password: '',
         newUsername: '',
         newPassword: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        avatarUrl: '../../../renderer/assets/defualtAvatar.png'
       },
       methods: {
+        onUsernameBlur(e) {
+          let url = 'http://localhost:8083/auth/party/photo/' + e.target.value;
+          axios.get(url, { responseType: 'blob' })
+            .then((res) => {
+              if (res.status === 200) {
+                const imageUrl = URL.createObjectURL(res.data); // 创建临时对象 URL
+                this.avatarUrl = imageUrl; // 更新头像路径
+              } else {
+                this.avatarUrl = '../../../renderer/assets/defualtAvatar.png';
+              }
+            });
+        },
         toggleMode() {
           this.mode = this.mode === 'login' ? 'register' : 'login';
         },
         login() {
-          if (this.username && this.password) {
-            axios({
-              method: 'post',
-              url: 'http://localhost:8083/auth/login',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-              },
-              data: {
-                username: this.username,
-                password: this.password,
-              }
-            }).then((res) => {
-              console.log("res", res)
-              if (res.data.code === 200) {
-                alert('登录成功');
-                window.electronAPI.loginSuccess(this.username)
-              } else {
-                alert('登录失败');
-              }
-            })
-            
-          } else {
-            alert('请输入用户名和密码');
+          try {
+            const socket = new WebSocket('ws://localhost:8083/auth/ws');
+            const stompClient = Stomp.over(socket);
+            stompClient.connect({}, () => {
+              stompClient.send(
+                "/app/chat",
+                {
+                  'content-type': 'application/json'
+                },
+                JSON.stringify({ "content": "测试消息" })
+              );
+            });
+          } catch (e) {
+            console.error("🚫 无法创建 WebSocket 实例", e);
           }
+          // if (this.username && this.password) {
+          //   axios({
+          //     method: 'post',
+          //     url: 'http://localhost:8083/auth/login',
+          //     headers: {
+          //       'Content-Type': 'application/x-www-form-urlencoded'
+          //     },
+          //     data: {
+          //       username: this.username,
+          //       password: this.password,
+          //     }
+          //   }).then((res) => {
+          //     console.log("res", res)
+          //     if (res.data.code === 200) {
+          //       alert('登录成功');
+
+          // window.electronAPI.loginSuccess(this.username)
+          //     } else {
+          //       alert('登录失败');
+          //     }
+          //   })
+
+          // } else {
+          //   alert('请输入用账号和密码');
+          // }
         },
         register() {
           if (!this.newUsername || !this.newPassword || !this.confirmPassword) {

@@ -2,6 +2,7 @@
 const { contextBridge, ipcRenderer } = require('electron')
 console.log('Preload.js loaded successfully!')
 contextBridge.exposeInMainWorld('electronAPI', {
+  ipcRenderer,
   loginSuccess: (username) => ipcRenderer.invoke('login-success', username),
   getMemories: () => ipcRenderer.invoke('get-memories'),
   getMemoryByPassword: (password) => ipcRenderer.invoke('get-memory-by-password', password),
@@ -12,4 +13,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openDevTools: () => ipcRenderer.send('open-dev-tools'),
   openFile: () => ipcRenderer.invoke('open-file'),
   openFolder: () => ipcRenderer.invoke(),
+  getConfig: () => ipcRenderer.invoke('get-config'),
 });

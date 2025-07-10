@@ -39,9 +39,15 @@
                     <input type="text" placeholder="搜索联系人..." v-model="searchQuery" />
                 </div>
                 <div class="contact" v-for="contact in contacts" :key="contact.id"
-                    :class="{active: contact.id === currentContact.id}" @click="selectContact(contact)">
+                    :class="{active: contact.id === currentContact?.id}" @click="selectContact(contact)">
                     <img :src="contact.avatar" class="contact-avatar" />
-                    <div class="contact-name">{{ contact.name }}</div>
+
+                    <div class="contact-info">
+                        <div class="contact-name">{{ contact.name }}</div>
+                        <div class="contact-last-message">
+                            {{ getLastMessageText(contact) }}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -60,7 +66,7 @@
 
                 <div class="chat-footer">
                     <div class="feature-bar">
-                        <button @click="avatarReq">
+                        <button @click.prevent>
                             <span class="material-icons">insert_photo</span>
                         </button>
                         <button @click.prevent>
@@ -91,8 +97,8 @@
                 <div class="top-row">
                     <img :src="myAvatar" class="card-avatar" @click="zoomAvatar(myAvatar)" />
                     <div class="info">
-                        <div class="name">张三</div>
-                        <div class="username">ID: zhangsan123</div>
+                        <div class="name">{{ myName }}</div>
+                        <div class="username">ID: {{ userLoginId }}</div>
                     </div>
                 </div>
 

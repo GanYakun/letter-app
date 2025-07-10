@@ -10,30 +10,32 @@ new Vue({
     zoomedImageUrl: null,
     newMessage: '',
     myAvatar: null,
+    myName: '',
+    userLoginId: '',
     contacts: [
-      {
-        id: 1,
-        name: '张三',
-        avatar: 'https://i.pravatar.cc/32?img=2',
-        messages: [
-          { id: 1, text: '你好，我是张三。', from: 'other' },
-          { id: 2, text: '你好！', from: 'me' }
-        ]
-      },
-      {
-        id: 2,
-        name: '李四',
-        avatar: 'https://i.pravatar.cc/32?img=3',
-        messages: [
-          { id: 1, text: '最近怎么样？', from: 'other' }
-        ]
-      },
-      {
-        id: 3,
-        name: '王五',
-        avatar: 'https://i.pravatar.cc/32?img=4',
-        messages: []
-      }
+      // {
+      //   id: 1,
+      //   name: '张三',
+      //   avatar: 'https://i.pravatar.cc/32?img=2',
+      //   messages: [
+      //     { id: 1, text: '你好，我是张三。', from: 'other' },
+      //     { id: 2, text: '你好！', from: 'me' }
+      //   ]
+      // },
+      // {
+      //   id: 2,
+      //   name: '李四',
+      //   avatar: 'https://i.pravatar.cc/32?img=3',
+      //   messages: [
+      //     { id: 1, text: '最近怎么样？', from: 'other' }
+      //   ]
+      // },
+      // {
+      //   id: 3,
+      //   name: '王五',
+      //   avatar: 'https://i.pravatar.cc/32?img=4',
+      //   messages: []
+      // }
     ],
     currentContact: null,
     messageIdCounter: 100,
@@ -128,24 +130,63 @@ new Vue({
     startDrag(event) {
       ipcRenderer.send('start-drag');
     },
-    avatarReq() {
+    async initUserInfo() {
       const params = new URLSearchParams(window.location.search);
       let username = params.get('username');
       let decodeUsername = decodeURIComponent(username);
+      this.userLoginId = decodeUsername;
       let url = 'http://localhost:8083/auth/party/photo/' + decodeUsername;
-      axios.get(url, { responseType: 'blob' })
+      await axios.get(url, { responseType: 'blob' })
         .then((res) => {
           const imageUrl = URL.createObjectURL(res.data); // 创建临时对象 URL
           this.myAvatar = imageUrl; // 更新头像路径
-        });
-
-    }
+        }
+        );
+      await axios.get('http://localhost:8083/auth/party/' + decodeUsername)
+        .then((res) => {
+          this.myName = res.data.data.partyName;
+        }
+        )
+    },
+    async initContacts() {
+      let url = 'http://localhost:8083/auth/party/contacts/' + this.userLoginId;
+      await axios.get(url)
+        .then((res) => {
+          let contacts = res.data.data;
+          for (let i = 0; i < contacts.length; i++) {
+            let contact = contacts[i];
+            let url = 'http://localhost:8083/auth/party/photo/' + contact.createdByUserLogin;
+            axios.get(url, { responseType: 'blob' })
+              .then((res) => {
+                const imageUrl = URL.createObjectURL(res.data); // 创建临时对象 URL
+                this.$set(this.contacts, this.contacts.length, {
+                  id: contact.partyId,
+                  name: contact.partyName,
+                  avatar: imageUrl,
+                  messages: []
+                });
+              }
+              )
+          }
+        }
+        )
+      console.log(this.contacts);
+    },
+    // 获取最后一条消息文本
+    getLastMessageText(contact) {
+      if (contact.messages && contact.messages.length > 0) {
+        const lastMessage = contact.messages[contact.messages.length - 1];
+        return lastMessage.text;
+      }
+      return '  ';
+    },
   },
   mounted() {
     document.addEventListener('click', this.handleClickOutside);
-    this.currentContact = this.contacts[0]; // 默认选中第一个联系人
     this.scrollToBottom();
-    this.avatarReq();
+    this.initUserInfo();
+    this.initContacts();
+    this.currentContact = this.contacts[0]; // 默认选中第一个联系人
 
   },
   beforeDestroy() {

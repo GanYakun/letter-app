@@ -8,6 +8,7 @@
     "login": "electron .\"",
     "mini_app_exam_dev": "electron .\"",
     "mini_app_chat_dev": "electron .\"",
+    "mini_app_camera_dev": "electron .\"",
     "build": "vite build && electron-builder",
     "serve": "vite preview",
     "start": "electron-forge start",
@@ -20,7 +21,9 @@
       "dist/",
       "renderer/",
       "electron/**/*",
-      "package.json"
+      "package.json",
+      "mini-app/**/*",
+      "config.json"
     ],
     "directories": {
       "buildResources": "assets"
@@ -29,6 +32,7 @@
   "dependencies": {
     "axios": "^1.9.0",
     "crypto-js": "^4.1.1",
+    "sockjs-client": "^1.6.1",
     "sqlite3": "^5.1.7",
     "vite-plugin-electron": "^0.29.0",
     "vite-plugin-electron-renderer": "^0.14.6",
