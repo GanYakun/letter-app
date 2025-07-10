@@ -47,47 +47,47 @@ ipcMain.handle('get-config', () => {
 });
 
 // 获取记忆数据
-ipcMain.handle('get-memories', () => {
-    return new Promise((resolve, reject) => {
-        db.all('SELECT * FROM memories', (err, rows) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(rows);
-            }
-        });
-    });
-});
+// ipcMain.handle('get-memories', () => {
+//     return new Promise((resolve, reject) => {
+//         db.all('SELECT * FROM memories', (err, rows) => {
+//             if (err) {
+//                 reject(err);
+//             } else {
+//                 resolve(rows);
+//             }
+//         });
+//     });
+// });
 
-// 获取记忆数据
-ipcMain.handle('get-memory-by-password', (event, password) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'SELECT * FROM memories WHERE password = ?';
-        db.get(sql, [password], (err, row) => {
-            if (err) {
-                console.error('Database error:', err);
-                reject(err);
-            } else {
-                resolve(row); // 返回一条记录
-            }
-        });
-    });
-});
+// // 获取记忆数据
+// ipcMain.handle('get-memory-by-password', (event, password) => {
+//     return new Promise((resolve, reject) => {
+//         const sql = 'SELECT * FROM memories WHERE password = ?';
+//         db.get(sql, [password], (err, row) => {
+//             if (err) {
+//                 console.error('Database error:', err);
+//                 reject(err);
+//             } else {
+//                 resolve(row); // 返回一条记录
+//             }
+//         });
+//     });
+// });
 
-// 添加新记忆
-ipcMain.handle('add-memory', (event, title, content, password, unlockTime) => {
-    return new Promise((resolve, reject) => {
-        const stmt = db.prepare('INSERT INTO memories (title, content, password, unlockTime, created_at) VALUES (?, ?, ?, ?, ?)');
-        stmt.run(title, content, password, unlockTime, new Date().toISOString(), function (err) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve({ id: this.lastID });
-            }
-        });
-        stmt.finalize();
-    });
-});
+// // 添加新记忆
+// ipcMain.handle('add-memory', (event, title, content, password, unlockTime) => {
+//     return new Promise((resolve, reject) => {
+//         const stmt = db.prepare('INSERT INTO memories (title, content, password, unlockTime, created_at) VALUES (?, ?, ?, ?, ?)');
+//         stmt.run(title, content, password, unlockTime, new Date().toISOString(), function (err) {
+//             if (err) {
+//                 reject(err);
+//             } else {
+//                 resolve({ id: this.lastID });
+//             }
+//         });
+//         stmt.finalize();
+//     });
+// });
 
 ipcMain.handle('login-success', (event, username) => {
     if (!win.isDestroyed()) {
