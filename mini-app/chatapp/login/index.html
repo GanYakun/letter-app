@@ -121,7 +121,9 @@
   <!-- 引入 Vue 和 ipcRenderer -->
   <script src="../../vue.js"></script>
   <script src="../../../node_modules/axios/dist/axios.min.js"></script>
+
   <script>
+    const { Client } = require('@stomp/stompjs');
     new Vue({
       el: '#login',
       data: {
@@ -151,17 +153,16 @@
         },
         login() {
           try {
-            const socket = new WebSocket('ws://localhost:8083/auth/ws');
-            const stompClient = Stomp.over(socket);
-            stompClient.connect({}, () => {
-              stompClient.send(
-                "/app/chat",
-                {
-                  'content-type': 'application/json'
-                },
-                JSON.stringify({ "content": "测试消息" })
-              );
+            const client = new Client({
+              brokerURL: 'ws://localhost:8083/auth/ws-native',
             });
+            client.onConnect = () => {
+              client.publish({
+                destination: "/app/chat",
+                body: "hello world"
+              });
+            };
+            client.activate();
           } catch (e) {
             console.error("🚫 无法创建 WebSocket 实例", e);
           }
