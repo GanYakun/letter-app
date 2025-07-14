@@ -13,29 +13,6 @@ new Vue({
     myName: '',
     userLoginId: '',
     contacts: [
-      // {
-      //   id: 1,
-      //   name: '张三',
-      //   avatar: 'https://i.pravatar.cc/32?img=2',
-      //   messages: [
-      //     { id: 1, text: '你好，我是张三。', from: 'other' },
-      //     { id: 2, text: '你好！', from: 'me' }
-      //   ]
-      // },
-      // {
-      //   id: 2,
-      //   name: '李四',
-      //   avatar: 'https://i.pravatar.cc/32?img=3',
-      //   messages: [
-      //     { id: 1, text: '最近怎么样？', from: 'other' }
-      //   ]
-      // },
-      // {
-      //   id: 3,
-      //   name: '王五',
-      //   avatar: 'https://i.pravatar.cc/32?img=4',
-      //   messages: []
-      // }
     ],
     currentContact: null,
     messageIdCounter: 100,
@@ -163,11 +140,17 @@ new Vue({
                   id: contact.partyId,
                   name: contact.partyName,
                   avatar: imageUrl,
-                  messages: []
+                  messages: [],
+                  userLoginId: contact.createdByUserLogin
                 });
+                // 在所有联系人都加载完后设置 currentContact
+                if (this.contacts.length === contacts.length) {
+                  this.currentContact = this.contacts[0];
+                }
               }
               )
           }
+          console.log('Contacts initialized:', this.contacts);
         }
         )
       console.log(this.contacts);
@@ -186,8 +169,6 @@ new Vue({
     this.scrollToBottom();
     this.initUserInfo();
     this.initContacts();
-    this.currentContact = this.contacts[0]; // 默认选中第一个联系人
-
   },
   beforeDestroy() {
     // Vue 2 使用 beforeDestroy，Vue 3 使用 beforeUnmount

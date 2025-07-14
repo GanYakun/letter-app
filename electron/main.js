@@ -16,34 +16,34 @@ const userConfigPath = path.join(app.getPath('userData'), 'config.json');
 
 // 首次启动时自动复制 config.json 到 userData 目录
 function ensureUserConfig() {
-  if (!fs.existsSync(userConfigPath)) {
-    if (fs.existsSync(defaultConfigPath)) {
-      fs.copyFileSync(defaultConfigPath, userConfigPath);
-      console.log('已复制默认配置到', userConfigPath);
-    } else {
-      // 如果没有默认配置，可以写入一个空对象或默认内容
-      fs.writeFileSync(userConfigPath, JSON.stringify({}), 'utf-8');
-      console.log('未找到默认配置，已创建空配置文件', userConfigPath);
+    if (!fs.existsSync(userConfigPath)) {
+        if (fs.existsSync(defaultConfigPath)) {
+            fs.copyFileSync(defaultConfigPath, userConfigPath);
+            console.log('已复制默认配置到', userConfigPath);
+        } else {
+            // 如果没有默认配置，可以写入一个空对象或默认内容
+            fs.writeFileSync(userConfigPath, JSON.stringify({}), 'utf-8');
+            console.log('未找到默认配置，已创建空配置文件', userConfigPath);
+        }
     }
-  }
 }
 
 // 读取 config.json 配置
 function getUserConfig() {
-  try {
-    const data = fs.readFileSync(userConfigPath, 'utf-8');
-    return JSON.parse(data);
-  } catch (e) {
-    console.warn('读取配置文件失败:', e.message);
-    return {};
-  }
+    try {
+        const data = fs.readFileSync(userConfigPath, 'utf-8');
+        return JSON.parse(data);
+    } catch (e) {
+        console.warn('读取配置文件失败:', e.message);
+        return {};
+    }
 }
 
 let win
 // 监听配置请求
 ipcMain.handle('get-config', () => {
-  console.log('已复制默认配置到', userConfigPath);
-  return getUserConfig();
+    console.log('已复制默认配置到', userConfigPath);
+    return getUserConfig();
 });
 
 // 获取记忆数据
@@ -105,9 +105,9 @@ ipcMain.handle('login-success', (event, username) => {
                 nodeIntegration: false
             }
         })
-        win.loadFile(path.join(__dirname, '../mini-app/chatapp/main/index.html'), { 
+        win.loadFile(path.join(__dirname, '../mini-app/chatapp/main/index.html'), {
             search: `?username=${encodeURIComponent(username)}`
-});
+        });
     }
 });
 
@@ -134,86 +134,12 @@ ipcMain.on('start-drag', () => {
 });
 
 ipcMain.on('toggle-fullscreen', (event) => {
-  if (!win.isDestroyed()) {
-    if (win.isFullScreen()) {
-      win.setFullScreen(false); // 退出全屏
-    } else {
-      win.setFullScreen(true); // 进入全屏
-    }
-  }
-});
-
-// 接收图片并保存
-ipcMain.on('save-captured-image', (event, imageData) => {
-  const base64Data = imageData.replace(/^data:image\/png;base64,/, '');
-
-  // 获取当前时间并格式化为 YYYYMMDDHHMMSS
-  const now = new Date();
-  const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-  const data = JSON.parse(fs.readFileSync(userConfigPath, 'utf-8'));
-  console.log("获取配置", data);
-  const saveDir = data.photoSavePath;
-  const fileName = `photo_${timestamp}.png`;
-  const filePath = path.join(saveDir, fileName);
-
-  // 确保目录存在
-  if (!fs.existsSync(saveDir)) {
-    fs.mkdirSync(saveDir, { recursive: true });
-  }
-
-  fs.writeFile(filePath, base64Data, 'base64', (err) => {
-    if (err) {
-      console.error('保存图片失败:', err);
-      event.reply('save-captured-image-reply', { success: false, error: err });
-    } else {
-      console.log(`图片已保存至: ${filePath}`);
-      event.reply('save-captured-image-reply', { success: true, path: filePath });
-    }
-  });
-});
-
-ipcMain.handle('create-person-folder', async (event, folderPath) => {
-  try {
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-});
-
-ipcMain.handle('save-person-image', async (event, { folderPath, fileName, imageData }) => {
-  try {
-    // 只保留base64部分
-    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-    const filePath = path.join(folderPath, fileName);
-
-    // 确保文件夹存在
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
-
-    fs.writeFileSync(filePath, base64Data, 'base64');
-    return { success: true, path: filePath };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-});
-
-ipcMain.handle('download-excel-file', async (event, filePath) => {
-    // const filePath = 'F:\\work doc\\别人的项目\\人脸识别\\20250630识别结果.xlsx';
-
-    if (!fs.existsSync(filePath)) {
-        return { success: false, error: '文件不存在' };
-    }
-
-    try {
-        const data = fs.readFileSync(filePath);
-        const base64 = data.toString('base64');
-        return { success: true, data: base64, filename: path.basename(filePath) };
-    } catch (err) {
-        return { success: false, error: err.message };
+    if (!win.isDestroyed()) {
+        if (win.isFullScreen()) {
+            win.setFullScreen(false); // 退出全屏
+        } else {
+            win.setFullScreen(true); // 进入全屏
+        }
     }
 });
 
@@ -224,6 +150,19 @@ const db = new sqlite3.Database('memory.db', (err) => {
         console.log('Database opened');
     }
 });
+
+// 注册 Ctrl+R 快捷键
+const registerShortcuts = () => {
+    globalShortcut.register('CommandOrControl+R', () => {
+        if (!win.isDestroyed() && win.webContents) {
+            win.webContents.reload();
+        }
+    });
+
+    globalShortcut.register('CommandOrControl+Q', () => {
+        win.webContents.openDevTools();
+    });
+};
 
 db.serialize(() => {
     db.run(`
@@ -278,8 +217,8 @@ app.whenReady().then(() => {
                 nodeIntegration: false
             }
         })
-    } 
-    else if (process.env.npm_lifecycle_event === 'login') { 
+    }
+    else if (process.env.npm_lifecycle_event === 'login') {
         win = new BrowserWindow({
             width: 415,
             height: 340,
@@ -289,22 +228,10 @@ app.whenReady().then(() => {
             titleBarOverlay: false,
             webPreferences: {
                 preload: path.join(__dirname, 'preload.js'),
-                contextIsolation: false,
+                contextIsolation: true,
                 nodeIntegration: true,
                 webSecurity: false,        // 禁用 CORS 限制
                 allowRunningInsecureContent: true // 允许不安全内容
-            }
-        })
-    } else if (process.env.npm_lifecycle_event === 'mini_app_camera_dev') {
-         win = new BrowserWindow({
-            width: 1100,
-            height: 680,
-            fullscreen: true,
-            icon: path.join(__dirname, '../renderer/assets/exam_icon.png'), // ✅ 图标路径
-            webPreferences: {
-                nodeIntegration: true,
-                preload: path.join(__dirname, 'preload.js'),
-                contextIsolation: false,
             }
         })
     }
@@ -322,48 +249,11 @@ app.whenReady().then(() => {
                 devTools: true // 可选
             }
         })
-        // win = new BrowserWindow({
-        //     width: 870,
-        //     height: 640,
-        //     icon: path.join(__dirname, '../renderer/assets/exam_icon.png'), // ✅ 图标路径
-        //     webPreferences: {
-        //         preload: path.join(__dirname, 'preload.js'),
-        //         contextIsolation: true,
-        //         nodeIntegration: false,
-        //     }
-        // })
     }
 
     win.removeMenu();
 
-    // ✅ 自定义菜单栏模板
-    // const menuTemplate = [
-    //     {
-    //         label: '文件',
-    //         submenu: [
-    //             {
-    //                 label: '打开',
-    //                 click: () => {
-    //                     console.log('点击了打开');
-    //                 }
-    //             },
-    //             {
-    //                 label: '退出',
-    //                 role: 'quit' // 使用 Electron 内置行为
-    //             }
-    //         ]
-    //     }
-    // ];
-
-    // ✅ 应用菜单栏
-    // const menu = Menu.buildFromTemplate(menuTemplate);
-    // Menu.setApplicationMenu(menu);
-
-    if (process.env.npm_lifecycle_event === 'dev') {
-        win.loadURL('http://localhost:3000');
-    } else if (process.env.npm_lifecycle_event === 'mini_app_exam_dev') {
-        win.loadFile(path.join(__dirname, '../mini-app/opration_examination.html'))
-    } else if (process.env.npm_lifecycle_event === 'mini_app_chat_dev') {
+    if (process.env.npm_lifecycle_event === 'mini_app_chat_dev') {
         win.loadFile(path.join(__dirname, '../mini-app/chatapp/main/index.html'))
 
         // 注册 Ctrl+R 快捷键
@@ -387,31 +277,10 @@ app.whenReady().then(() => {
         });
     } else if (process.env.npm_lifecycle_event === 'login') {
         win.loadFile(path.join(__dirname, '../mini-app/chatapp/login/index.html'));
-
-        // 注册 Ctrl+R 快捷键
-        const registerShortcuts = () => {
-            globalShortcut.register('CommandOrControl+R', () => {
-                if (!win.isDestroyed() && win.webContents) {
-                    win.webContents.reload();
-                }
-            });
-
-            globalShortcut.register('CommandOrControl+Q', () => {
-                win.webContents.openDevTools();
-            });
-        };
-
         registerShortcuts();
-    } else if (process.env.npm_lifecycle_event === 'mini_app_camera_dev') {
-        win.loadFile(path.join(__dirname, '../mini-app/camera-capture.html'));
-    }  
-    else {
-        // win.loadFile(path.join(__dirname, '../renderer/index.html'));
-        win.loadFile(path.join(__dirname, '../mini-app/camera-capture.html'));
+    } else {
+        win.loadFile(path.join(__dirname, '../mini-app/chatapp/login/index.html'));
     }
-
-    
-    win.webContents.openDevTools();
 
 })
 

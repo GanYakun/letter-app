@@ -169,6 +169,7 @@ body {
 
 /* =================== 窗口控制按钮 =================== */
 .title-bar-buttons {
+  -webkit-app-region: no-drag;
   position: absolute;
   top: 0;
   right: 0;
@@ -221,6 +222,7 @@ body {
 }
 
 .chat-header {
+  -webkit-app-region: drag;
   z-index: 1;
   background-color: white;
   color: #333;

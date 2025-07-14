@@ -15,12 +15,20 @@
       /* 去掉垂直滚动条 */
     }
 
+    .login-box input,
+    .login-box button,
+    .switch-mode,
+    .avatar-preview {
+      -webkit-app-region: no-drag;
+    }
+
     .login-container {
       height: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
       background-color: white;
+      -webkit-app-region: drag;
     }
 
     .login-box {
@@ -85,11 +93,37 @@
       height: 100%;
       object-fit: cover;
     }
+
+    /* 自定义弹窗样式 */
+    .error-mask {
+      position: fixed;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.18);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .error-box {
+      background: #fff;
+      color: #d00;
+      padding: 24px 40px;
+      border-radius: 8px;
+      font-size: 18px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+      min-width: 180px;
+      text-align: center;
+      cursor: pointer;
+    }
   </style>
 </head>
 
 <body>
   <div id="login" class="login-container">
+    <!-- 自定义错误弹窗 -->
+    <div v-if="showError" class="error-mask" @click="showError=false">
+      <div class="error-box">{{ errorMsg }}</div>
+    </div>
     <div class="login-box">
       <!-- 登录表单 -->
       <div v-if="mode === 'login'" style="padding-top: 25px;">
@@ -123,7 +157,7 @@
   <script src="../../../node_modules/axios/dist/axios.min.js"></script>
 
   <script>
-    const { Client } = require('@stomp/stompjs');
+    // const { Client } = require('@stomp/stompjs');
     new Vue({
       el: '#login',
       data: {
@@ -133,7 +167,9 @@
         newUsername: '',
         newPassword: '',
         confirmPassword: '',
-        avatarUrl: '../../../renderer/assets/defualtAvatar.png'
+        avatarUrl: '../../../renderer/assets/defualtAvatar.png',
+        showError: false,
+        errorMsg: ''
       },
       methods: {
         onUsernameBlur(e) {
@@ -151,46 +187,39 @@
         toggleMode() {
           this.mode = this.mode === 'login' ? 'register' : 'login';
         },
-        login() {
-          try {
-            const client = new Client({
-              brokerURL: 'ws://localhost:8083/auth/ws-native',
-            });
-            client.onConnect = () => {
-              client.publish({
-                destination: "/app/chat",
-                body: "hello world"
-              });
-            };
-            client.activate();
-          } catch (e) {
-            console.error("🚫 无法创建 WebSocket 实例", e);
+        async login() {
+          if (this.username && this.password) {
+            await axios({
+              method: 'post',
+              url: 'http://localhost:8083/auth/login',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              data: {
+                username: this.username,
+                password: this.password,
+              }
+            }).then((res) => {
+              console.log("res", res)
+              if (res.data.code === 200) {
+                this.showError = true;
+                this.errorMsg = '登录成功';
+                setTimeout(() => {
+                  this.showError = false;
+                  window.electronAPI.loginSuccess(this.username)
+                }, 800);
+              } else {
+                this.showError = true;
+                this.errorMsg = '登录失败';
+                this.$nextTick(() => {
+                  this.$el.querySelector('input[placeholder="账号"]').focus();
+                });
+              }
+            })
+          } else {
+            this.showError = true;
+            this.errorMsg = '请输入用账号和密码';
           }
-          // if (this.username && this.password) {
-          //   axios({
-          //     method: 'post',
-          //     url: 'http://localhost:8083/auth/login',
-          //     headers: {
-          //       'Content-Type': 'application/x-www-form-urlencoded'
-          //     },
-          //     data: {
-          //       username: this.username,
-          //       password: this.password,
-          //     }
-          //   }).then((res) => {
-          //     console.log("res", res)
-          //     if (res.data.code === 200) {
-          //       alert('登录成功');
-
-          // window.electronAPI.loginSuccess(this.username)
-          //     } else {
-          //       alert('登录失败');
-          //     }
-          //   })
-
-          // } else {
-          //   alert('请输入用账号和密码');
-          // }
         },
         register() {
           if (!this.newUsername || !this.newPassword || !this.confirmPassword) {
