@@ -148,5 +148,6 @@ app.whenReady().then(() => {
     win.removeMenu();
     //加载执行文件
     win.loadFile(path.join(__dirname, '../mini-app/camera-capture.html'));
+
 })
 

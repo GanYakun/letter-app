@@ -438,28 +438,22 @@
             alert('文件夹创建异常: ' + e.message);
           }
         },
-        checkProgressIdentification() {
-          // demo数据
-          this.progressTableData = [
-            {
-              name: '张三',
-              jobId: '1001',
-              similarity: '98.5%',
-              captureTime: '2025-07-09 10:12:23',
-              recognizeTime: '2025-07-09 10:12:25',
-              imgUrl: 'file:///F:/work doc/别人的项目/人脸识别/抓拍/张三-1001/正面.png',
-              originUrl: 'file:///F:/work doc/别人的项目/人脸识别/原图/张三-1001/正面.png',
-            },
-            {
-              name: '李四',
-              jobId: '1002',
-              similarity: '97.2%',
-              captureTime: '2025-07-09 10:15:10',
-              recognizeTime: '2025-07-09 10:15:12',
-              imgUrl: 'file:///F:/work doc/别人的项目/人脸识别/抓拍/李四-1002/正面.png',
-              originUrl: 'file:///F:/work doc/别人的项目/人脸识别/原图/李四-1002/正面.png',
-            },
-          ];
+        async checkProgressIdentification() {
+          try {
+            const response = await axios.get('http://127.0.0.1:8080/read_excel');
+            this.progressTableData = response.data.data.map(item => ({
+              name: item.姓名,
+              jobId: item.工号,
+              similarity: item.相似度,
+              captureTime: item.抓取时间,
+              recognizeTime: item.识别时间,
+              imgUrl: 'file:///' + item.图片地址.replace(/\\/g, '/'),
+              originUrl: 'file:///' + item.原图地址.replace(/\\/g, '/'),
+            }));
+          } catch (error) {
+            console.error('获取识别情况数据失败:', error);
+            alert('获取识别情况数据失败，请检查服务连接');
+          }
           this.showProgressTable = true;
         },
         async capturePhoto() {
@@ -559,6 +553,7 @@
             alert("请先做人脸对比！");
             return;
           }
+          console.log('下载Excel文件:', this.excelFilePath);
           ipcRenderer.invoke('download-excel-file', this.excelFilePath).then(result => {
             if (result.success) {
               const byteChar = atob(result.data);
