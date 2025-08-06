@@ -225,6 +225,166 @@
       font-size: 18px;
       box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
     }
+
+    /* 人员基础信息表格样式 */
+    .basic-info-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #222;
+      color: #fff;
+      margin-top: 10px;
+    }
+
+    .basic-info-table th,
+    .basic-info-table td {
+      padding: 8px;
+      border: 1px solid #444;
+      text-align: center;
+    }
+
+    .basic-info-table th {
+      background-color: #333;
+      font-weight: bold;
+    }
+
+    .basic-info-table tr:nth-child(even) {
+      background-color: #2a2a2a;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+      gap: 5px;
+    }
+
+    .pagination button {
+      padding: 5px 10px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+
+    .pagination span {
+      align-self: center;
+      margin: 0 10px;
+    }
+
+    /* 新增人员信息表单样式 */
+    .add-person-form {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+
+    .add-person-form h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #fff;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-group label {
+      width: 80px;
+      color: #fff;
+      margin-right: 10px;
+    }
+
+    .form-group input,
+    .form-group select {
+      flex: 1;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #333;
+      color: #fff;
+    }
+
+    .form-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .form-buttons button {
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background-color: #4a90e2;
+      color: white;
+    }
+
+    .btn-secondary {
+      background-color: #666;
+      color: white;
+    }
+
+    /* 编辑表单样式 */
+    .edit-person-form {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+
+    .edit-person-form h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #fff;
+    }
+
+    /* 隐藏的文件输入框 */
+    .file-input {
+      display: none;
+    }
+
+    /* 操作按钮样式 */
+    .action-buttons {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+    }
+
+    .action-buttons button {
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+      font-size: 12px;
+    }
+
+    .btn-edit {
+      background-color: #4a90e2;
+      color: white;
+    }
+
+    .btn-save {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .btn-cancel {
+      background-color: #666;
+      color: white;
+    }
   </style>
 </head>
 
@@ -274,6 +434,181 @@
             @click="showProgressTable=false">返回</button>
         </div>
       </template>
+      <template v-else-if="showBasicInfoTable">
+        <div style="width:100%;height:100%;overflow:auto;background:#232323;border-radius:8px;padding:18px 8px 8px 8px;">
+          <h3 style="color:#fff;margin:0 0 12px 0;">人员基础信息</h3>
+          
+          <!-- 新增人员信息表单 -->
+          <div class="add-person-form" v-if="showAddPersonForm">
+            <h3>新增人员信息</h3>
+            <div class="form-group">
+              <label>用户名:</label>
+              <input type="text" v-model="newPerson.user_name" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+              <label>工号:</label>
+              <input type="text" v-model="newPerson.job_num" placeholder="请输入工号">
+            </div>
+            <div class="form-group">
+              <label>部门:</label>
+              <input type="text" v-model="newPerson.dept" placeholder="请输入部门">
+            </div>
+            <div class="form-group">
+              <label>周期:</label>
+              <select v-model="newPerson.cycle">
+                <option value="周">周</option>
+                <option value="月">月</option>
+                <option value="年">年</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>是否在场:</label>
+              <select v-model="newPerson.field">
+                <option value="是">是</option>
+                <option value="否">否</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>开始日期:</label>
+              <input type="date" v-model="newPerson.start_date">
+            </div>
+            <div class="form-group">
+              <label>结束日期:</label>
+              <input type="date" v-model="newPerson.end_date">
+            </div>
+            <div class="form-buttons">
+              <button class="btn-secondary" @click="showAddPersonForm = false">取消</button>
+              <button class="btn-primary" @click="addBasicInfo">保存</button>
+            </div>
+          </div>
+          
+          <!-- 编辑人员信息表单 -->
+          <div class="edit-person-form" v-if="editingPerson.id">
+            <h3>编辑人员信息</h3>
+            <div class="form-group">
+              <label>用户名:</label>
+              <input type="text" v-model="editingPerson.user_name" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+              <label>工号:</label>
+              <input type="text" v-model="editingPerson.job_num" placeholder="请输入工号">
+            </div>
+            <div class="form-group">
+              <label>部门:</label>
+              <input type="text" v-model="editingPerson.dept" placeholder="请输入部门">
+            </div>
+            <div class="form-group">
+              <label>周期:</label>
+              <select v-model="editingPerson.cycle">
+                <option value="周">周</option>
+                <option value="月">月</option>
+                <option value="年">年</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>是否在场:</label>
+              <select v-model="editingPerson.field">
+                <option value="是">是</option>
+                <option value="否">否</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>开始日期:</label>
+              <input type="date" v-model="editingPerson.start_date">
+            </div>
+            <div class="form-group">
+              <label>结束日期:</label>
+              <input type="date" v-model="editingPerson.end_date">
+            </div>
+            <div class="form-buttons">
+              <button class="btn-secondary" @click="cancelEdit">取消</button>
+              <button class="btn-primary" @click="updateBasicInfo">保存</button>
+            </div>
+          </div>
+          
+          <!-- 操作按钮 -->
+          <div style="margin-bottom: 10px;">
+            <button 
+              style="padding: 6px 12px; background-color: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;"
+              @click="showAddPersonForm = !showAddPersonForm">
+              {{ showAddPersonForm ? '取消新增' : '新增人员' }}
+            </button>
+            
+            <button 
+              style="padding: 6px 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              @click="triggerImport">
+              导入
+            </button>
+            
+            <button 
+              style="padding: 6px 12px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;"
+              @click="deleteSelectedItems"
+              :disabled="selectedItems.length === 0">
+              删除 ({{ selectedItems.length }})
+            </button>
+            
+            <!-- 隐藏的文件输入框 -->
+            <input type="file" ref="fileInput" class="file-input" @change="handleFileImport" accept=".xlsx">
+          </div>
+          
+          <table class="basic-info-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">
+                  <input 
+                    type="checkbox" 
+                    @change="toggleSelectAll" 
+                    :checked="selectedItems.length > 0 && selectedItems.length === basicInfoData.length">
+                </th>
+                <th>ID</th>
+                <th>用户名</th>
+                <th>工号</th>
+                <th>部门</th>
+                <th>是否在场</th>
+                <th>周期</th>
+                <th>开始日期</th>
+                <th>结束日期</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in basicInfoData" :key="item.id">
+                <td style="text-align: center;">
+                  <input 
+                    type="checkbox" 
+                    :value="item.id" 
+                    v-model="selectedItems"
+                    @change="updateSelectAllState">
+                </td>
+                <td>{{ item.id }}</td>
+                <td>{{ item.user_name }}</td>
+                <td>{{ item.job_num }}</td>
+                <td>{{ item.dept }}</td>
+                <td>{{ item.field }}</td>
+                <td>{{ item.cycle }}</td>
+                <td>{{ item.start_date }}</td>
+                <td>{{ item.end_date }}</td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn-edit" @click="startEdit(item)">编辑</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <!-- 分页控件 -->
+          <div class="pagination">
+            <button @click="fetchBasicInfo(currentPage-1)" :disabled="currentPage <= 1">上一页</button>
+            <span>第 {{ currentPage }} 页，共 {{ totalPages }} 页</span>
+            <button @click="fetchBasicInfo(currentPage+1)" :disabled="currentPage >= totalPages">下一页</button>
+          </div>
+          
+          <button
+            style="margin-top:18px;padding:8px 18px;background:#4a90e2;color:#fff;border:none;border-radius:4px;cursor:pointer;"
+            @click="showBasicInfoTable=false">返回</button>
+        </div>
+      </template>
       <template v-else>
         <video ref="video" v-show="cameraAvailable" autoplay></video>
         <div class="black-screen" v-show="!cameraAvailable"></div>
@@ -313,6 +648,7 @@
         <button @click="importAttendance">导入考勤表</button>
         <button @click="checkProgressIdentification">查看识别情况</button>
         <button @click="downloadExcel">下载Excel</button>
+        <button @click="checkPartyInfo">人员基础信息</button>
         <button @click="toggleFullscreen">切换全屏</button>
       </div>
 
@@ -363,6 +699,32 @@
       data: {
         showProgressTable: false,
         progressTableData: [],
+        showBasicInfoTable: false,
+        basicInfoData: [],
+        currentPage: 1,
+        totalPages: 1,
+        showAddPersonForm: false,
+        newPerson: {
+          id: 0,
+          user_name: '',
+          job_num: '',
+          dept: '',
+          cycle: '周',
+          field: '是',
+          start_date: '',
+          end_date: ''
+        },
+        editingPerson: {
+          id: 0,
+          user_name: '',
+          job_num: '',
+          dept: '',
+          cycle: '周',
+          field: '是',
+          start_date: '',
+          end_date: ''
+        },
+        selectedItems: [], // 用于存储选中的项目ID
         showRegisterDialog: false,
         registerName: '',
         registerJobId: '',
@@ -384,6 +746,192 @@
         this.startCamera();
       },
       methods: {
+        async checkPartyInfo() {
+          this.currentPage = 1;
+          this.showAddPersonForm = false;
+          this.editingPerson.id = 0; // 重置编辑状态
+          await this.fetchBasicInfo(1);
+          this.showBasicInfoTable = true;
+        },
+        async fetchBasicInfo(page) {
+          try {
+            const response = await axios.get(`http://127.0.0.1:8080/select_basic_info?page_num=${page}&page_size=10`);
+            console.log('获取人员基础信息成功:', response.data);
+            this.basicInfoData = response.data.data;
+            this.currentPage = response.data.page_num;
+            this.totalPages = response.data.total_pages;
+          } catch (error) {
+            console.error('获取人员基础信息失败:', error);
+            alert('获取人员基础信息失败，请检查服务连接');
+          }
+        },
+        async addBasicInfo() {
+          try {
+            const response = await axios.post('http://127.0.0.1:8080/add_basic_info', this.newPerson);
+            
+            if (response.data.success) {
+              alert('人员信息添加成功');
+              // 重置表单
+              this.newPerson = {
+                id: 0,
+                user_name: '',
+                job_num: '',
+                dept: '',
+                cycle: '周',
+                field: '是',
+                start_date: '',
+                end_date: ''
+              };
+              // 隐藏表单
+              this.showAddPersonForm = false;
+              // 重新加载数据
+              await this.fetchBasicInfo(this.currentPage);
+            } else {
+              alert('添加失败: ' + response.data.message);
+            }
+          } catch (error) {
+            console.error('添加人员信息失败:', error);
+            alert('添加人员信息失败，请检查服务连接');
+          }
+        },
+        startEdit(item) {
+          // 深拷贝要编辑的人员信息
+          this.editingPerson = {
+            id: item.id,
+            user_name: item.user_name,
+            job_num: item.job_num,
+            dept: item.dept,
+            cycle: item.cycle,
+            field: item.field,
+            start_date: item.start_date,
+            end_date: item.end_date
+          };
+        },
+        cancelEdit() {
+          this.editingPerson.id = 0; // 重置编辑状态
+        },
+        async updateBasicInfo() {
+          try {
+            const response = await axios.post('http://127.0.0.1:8080/update_basic_info', this.editingPerson);
+            
+            if (response.data.success) {
+              alert('人员信息更新成功');
+              // 重置编辑状态
+              this.editingPerson.id = 0;
+              // 重新加载数据
+              await this.fetchBasicInfo(this.currentPage);
+            } else {
+              alert('更新失败: ' + response.data.message);
+            }
+          } catch (error) {
+            console.error('更新人员信息失败:', error);
+            alert('更新人员信息失败，请检查服务连接');
+          }
+        },
+        // 全选/取消全选
+        toggleSelectAll(event) {
+          if (event.target.checked) {
+            // 全选
+            this.selectedItems = this.basicInfoData.map(item => item.id);
+          } else {
+            // 取消全选
+            this.selectedItems = [];
+          }
+        },
+        // 更新全选状态
+        updateSelectAllState() {
+          // 这个方法会在每次选择项改变时触发，用于保持全选框的状态正确
+          // 实际逻辑在模板中的全选框表达式中处理
+        },
+        // 删除选中的项目
+        async deleteSelectedItems() {
+          if (this.selectedItems.length === 0) {
+            alert('请先选择要删除的项目');
+            return;
+          }
+          
+          if (!confirm(`确定要删除选中的 ${this.selectedItems.length} 项吗？`)) {
+            return;
+          }
+          
+          try {
+            // 循环调用删除接口，每次只传递一个ID
+            const deletePromises = this.selectedItems.map(id => 
+              axios.delete(`http://127.0.0.1:8080/delete_basic_info?id=${id}`)
+            );
+            
+            // 等待所有删除请求完成
+            const results = await Promise.all(deletePromises);
+            
+            // 合并所有响应结果
+            let detailMessage = '';
+            results.forEach((result, index) => {
+              if (result.data.detail) {
+                detailMessage += `ID ${this.selectedItems[index]}: ${result.data.detail}\n`;
+              }
+            });
+            
+            // 显示响应结果
+            if (detailMessage) {
+              alert(detailMessage);
+            } else {
+              alert('删除成功');
+            }
+            
+            // 清空选中项
+            this.selectedItems = [];
+            
+            // 重新加载数据
+            await this.fetchBasicInfo(this.currentPage);
+          } catch (error) {
+            console.error('删除失败:', error);
+            alert('删除失败，请检查服务连接');
+          }
+        },
+        triggerImport() {
+          // 触发文件选择
+          this.$refs.fileInput.click();
+        },
+        async handleFileImport(event) {
+          const file = event.target.files[0];
+          if (!file) {
+            return;
+          }
+
+          // 检查文件类型
+          if (!file.name.endsWith('.xlsx')) {
+            alert('请选择xlsx格式的文件');
+            event.target.value = ''; // 清空文件输入框
+            return;
+          }
+
+          // 创建FormData对象
+          const formData = new FormData();
+          formData.append('file', file);
+
+          try {
+            // 发送文件上传请求
+            const response = await axios.post('http://127.0.0.1:8080/import_basic_info', formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            });
+
+            // 显示响应结果
+            alert(`${response.data.message}，插入 ${response.data.inserted_count} 条记录`);
+            
+            // 清空文件输入框
+            event.target.value = '';
+            
+            // 重新加载数据
+            await this.fetchBasicInfo(this.currentPage);
+          } catch (error) {
+            console.error('文件上传失败:', error);
+            alert('文件上传失败，请检查服务连接');
+            // 清空文件输入框
+            event.target.value = '';
+          }
+        },
         startCamera() {
           navigator.mediaDevices
             .getUserMedia({ video: true })
@@ -598,6 +1146,13 @@
       },
       watch: {
         showProgressTable(val) {
+          if (!val) {
+            this.$nextTick(() => {
+              this.startCamera();
+            });
+          }
+        },
+        showBasicInfoTable(val) {
           if (!val) {
             this.$nextTick(() => {
               this.startCamera();

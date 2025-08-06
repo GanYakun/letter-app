@@ -149,5 +149,6 @@ app.whenReady().then(() => {
     //加载执行文件
     win.loadFile(path.join(__dirname, '../mini-app/camera-capture.html'));
 
+    win.webContents.openDevTools();
 })
 
