@@ -395,6 +395,44 @@
       <div class="wait-msg-box">正在识别人脸，请稍候...</div>
     </div>
 
+    <!-- 查看识别情况参数弹窗 -->
+    <div v-if="showProgressParamsDialog" class="wait-msg-mask" style="z-index:10000;">
+      <div class="wait-msg-box" style="min-width:320px;">
+        <h3 style="margin-top:0;">查询参数设置</h3>
+        <div style="margin-bottom:12px;">
+          <label>开始时间：</label>
+          <input type="datetime-local" v-model="progressStartTime" style="width:180px;" />
+        </div>
+        <div style="margin-bottom:18px;">
+          <label>结束时间：</label>
+          <input type="datetime-local" v-model="progressEndTime" style="width:180px;" />
+        </div>
+        <div style="text-align:right;">
+          <button @click="confirmProgressParams" style="margin-right:12px;">确定</button>
+          <button @click="cancelProgressParams">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下载Excel参数弹窗 -->
+    <div v-if="showDownloadExcelDialog" class="wait-msg-mask" style="z-index:10000;">
+      <div class="wait-msg-box" style="min-width:320px;">
+        <h3 style="margin-top:0;">导出参数设置</h3>
+        <div style="margin-bottom:12px;">
+          <label>开始时间：</label>
+          <input type="datetime-local" v-model="downloadStartTime" style="width:180px;" />
+        </div>
+        <div style="margin-bottom:18px;">
+          <label>结束时间：</label>
+          <input type="datetime-local" v-model="downloadEndTime" style="width:180px;" />
+        </div>
+        <div style="text-align:right;">
+          <button @click="confirmDownloadExcel" style="margin-right:12px;">确定</button>
+          <button @click="cancelDownloadExcel">取消</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 左侧摄像区 -->
     <div class="left-panel">
       <template v-if="showProgressTable">
@@ -415,11 +453,11 @@
             </thead>
             <tbody>
               <tr v-for="(row, idx) in progressTableData" :key="idx">
-                <td style="padding:6px 8px;border:1px solid #444;">{{ row.name }}</td>
-                <td style="padding:6px 8px;border:1px solid #444;">{{ row.jobId }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.user_name }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.job_num }}</td>
                 <td style="padding:6px 8px;border:1px solid #444;">{{ row.similarity }}</td>
-                <td style="padding:6px 8px;border:1px solid #444;">{{ row.captureTime }}</td>
-                <td style="padding:6px 8px;border:1px solid #444;">{{ row.recognizeTime }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.crawl_time }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.identify_time }}</td>
                 <td style="padding:6px 8px;border:1px solid #444;max-width:120px;overflow:auto;">
                   <a :href="row.imgUrl" target="_blank" style="color:#4a90e2;">图片</a>
                 </td>
@@ -429,6 +467,55 @@
               </tr>
             </tbody>
           </table>
+          
+          <!-- 识别情况分页控件 -->
+          <div class="pagination">
+            <button @click="fetchProgressData(progressTableCurrentPage-1)" :disabled="progressTableCurrentPage <= 1">上一页</button>
+            <span>第 {{ progressTableCurrentPage }} 页，共 {{ progressTableTotalPages }} 页</span>
+            <button @click="fetchProgressData(progressTableCurrentPage+1)" :disabled="progressTableCurrentPage >= progressTableTotalPages">下一页</button>
+          </div>
+          
+          <!-- 未识别人员情况表格 -->
+          <h3 style="color:#fff;margin:20px 0 12px 0;">未识别人员情况</h3>
+          <table style="width:100%;border-collapse:collapse;background:#222;color:#fff;">
+            <thead>
+              <tr style="background:#333;">
+                <th style="padding:6px 8px;border:1px solid #444;">用户名</th>
+                <th style="padding:6px 8px;border:1px solid #444;">工号</th>
+                <th style="padding:6px 8px;border:1px solid #444;">部门</th>
+                <th style="padding:6px 8px;border:1px solid #444;">是否在场</th>
+                <th style="padding:6px 8px;border:1px solid #444;">周期</th>
+                <th style="padding:6px 8px;border:1px solid #444;">开始日期</th>
+                <th style="padding:6px 8px;border:1px solid #444;">结束日期</th>
+                <th style="padding:6px 8px;border:1px solid #444;">最新识别时间</th>
+                <th style="padding:6px 8px;border:1px solid #444;">当前日期</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, idx) in notIdentifyTableData" :key="idx">
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.user_name }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.job_num }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.dept }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.field }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.cycle }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.start_date }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.end_date }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.latest_identify_time }}</td>
+                <td style="padding:6px 8px;border:1px solid #444;">{{ row.current_date }}</td>
+              </tr>
+              <tr v-if="notIdentifyTableData.length === 0">
+                <td colspan="9" style="padding:6px 8px;border:1px solid #444;text-align:center;">暂无数据</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <!-- 未识别人员情况分页控件 -->
+          <div class="pagination">
+            <button @click="fetchProgressData(notIdentifyTableCurrentPage-1)" :disabled="notIdentifyTableCurrentPage <= 1">上一页</button>
+            <span>第 {{ notIdentifyTableCurrentPage }} 页，共 {{ notIdentifyTableTotalPages }} 页</span>
+            <button @click="fetchProgressData(notIdentifyTableCurrentPage+1)" :disabled="notIdentifyTableCurrentPage >= notIdentifyTableTotalPages">下一页</button>
+          </div>
+          
           <button
             style="margin-top:18px;padding:8px 18px;background:#4a90e2;color:#fff;border:none;border-radius:4px;cursor:pointer;"
             @click="showProgressTable=false">返回</button>
@@ -647,7 +734,7 @@
 
         <button @click="importAttendance">导入考勤表</button>
         <button @click="checkProgressIdentification">查看识别情况</button>
-        <button @click="downloadExcel">下载Excel</button>
+        <button @click="showDownloadExcelDialogMethod">下载Excel</button>
         <button @click="checkPartyInfo">人员基础信息</button>
         <button @click="toggleFullscreen">切换全屏</button>
       </div>
@@ -699,6 +786,14 @@
       data: {
         showProgressTable: false,
         progressTableData: [],
+        progressTableCurrentPage: 1,
+        progressTableTotalPages: 1,
+        progressTablePageSize: 10,
+        // 未识别人员情况数据
+        notIdentifyTableData: [],
+        notIdentifyTableCurrentPage: 1,
+        notIdentifyTableTotalPages: 1,
+        notIdentifyTablePageSize: 10,
         showBasicInfoTable: false,
         basicInfoData: [],
         currentPage: 1,
@@ -741,6 +836,14 @@
         showWaitMsg: false,
         currentName: '', // 当前照片姓名
         currentJobId: '', // 当前照片工号
+        // 查看识别情况参数
+        showProgressParamsDialog: false,
+        progressStartTime: '',
+        progressEndTime: '',
+        // 下载Excel参数
+        showDownloadExcelDialog: false,
+        downloadStartTime: '',
+        downloadEndTime: '',
       },
       mounted() {
         this.startCamera();
@@ -987,22 +1090,53 @@
           }
         },
         async checkProgressIdentification() {
+          // 显示参数设置弹窗
+          this.showProgressParamsDialog = true;
+          // 初始化时间为当天
+          const now = new Date();
+          const today = now.toISOString().slice(0, 10);
+          this.progressStartTime = today + "T00:00";
+          this.progressEndTime = today + "T23:59";
+        },
+        confirmProgressParams() {
+          if (!this.progressStartTime || !this.progressEndTime) {
+            alert('请选择开始时间和结束时间');
+            return;
+          }
+          
+          // 关闭参数弹窗
+          this.showProgressParamsDialog = false;
+          
+          // 执行查询
+          this.fetchProgressData(1);
+        },
+        cancelProgressParams() {
+          this.showProgressParamsDialog = false;
+        },
+        async fetchProgressData(page) {
           try {
-            const response = await axios.get('http://127.0.0.1:8080/read_excel');
-            this.progressTableData = response.data.data.map(item => ({
-              name: item.姓名,
-              jobId: item.工号,
-              similarity: item.相似度,
-              captureTime: item.抓取时间,
-              recognizeTime: item.识别时间,
-              imgUrl: 'file:///' + item.图片地址.replace(/\\/g, '/'),
-              originUrl: 'file:///' + item.原图地址.replace(/\\/g, '/'),
-            }));
+            const startTime = this.progressStartTime.replace('T', ' ') + ':00';
+            const endTime = this.progressEndTime.replace('T', ' ') + ':59';
+            
+            // 获取识别情况数据
+            const response = await axios.get(`http://127.0.0.1:8080/identify_info?page_num=${page}&page_size=${this.progressTablePageSize}&start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}`);
+            console.log('获取识别情况数据成功:', response.data);
+            this.progressTableData = response.data.data;
+            this.progressTableCurrentPage = response.data.page_num;
+            this.progressTableTotalPages = response.data.total_pages;
+            
+            // 获取未识别人员情况数据
+            const notIdentifyResponse = await axios.get(`http://127.0.0.1:8080/not_identify_info?page_num=${page}&page_size=${this.notIdentifyTablePageSize}&start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}`);
+            console.log('获取未识别人员情况数据成功:', notIdentifyResponse.data);
+            this.notIdentifyTableData = notIdentifyResponse.data.data;
+            this.notIdentifyTableCurrentPage = notIdentifyResponse.data.page_num;
+            this.notIdentifyTableTotalPages = notIdentifyResponse.data.total_pages;
+            
+            this.showProgressTable = true;
           } catch (error) {
             console.error('获取识别情况数据失败:', error);
             alert('获取识别情况数据失败，请检查服务连接');
           }
-          this.showProgressTable = true;
         },
         async capturePhoto() {
           if (!this.cameraAvailable) {
@@ -1092,13 +1226,55 @@
         importAttendance() {
           alert("这里可以实现考勤表上传功能");
         },
+        // 显示下载Excel对话框
+        showDownloadExcelDialogMethod() {
+          this.showDownloadExcelDialog = true;
+          // 初始化时间为当天
+          const now = new Date();
+          const today = now.toISOString().slice(0, 10);
+          this.downloadStartTime = today + "T00:00";
+          this.downloadEndTime = today + "T23:59";
+        },
+        // 确认下载Excel
+        async confirmDownloadExcel() {
+          if (!this.downloadStartTime || !this.downloadEndTime) {
+            alert('请选择开始时间和结束时间');
+            return;
+          }
+          
+          // 关闭参数弹窗
+          this.showDownloadExcelDialog = false;
+          
+          try {
+            const startTime = this.downloadStartTime.replace('T', ' ') + ':00';
+            const endTime = this.downloadEndTime.replace('T', ' ') + ':59';
+            
+            // 发送请求获取Excel文件路径
+            const response = await axios.get(`http://127.0.0.1:8080/download_result?start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}`);
+            
+            if (response.data) {
+              this.excelFilePath = response.data;
+              // 调用原来的下载方法
+              this.downloadExcel();
+            } else {
+              alert('获取Excel文件路径失败');
+            }
+          } catch (error) {
+            console.error('获取Excel文件路径失败:', error);
+            alert('获取Excel文件路径失败，请检查服务连接');
+          }
+        },
+        // 取消下载Excel
+        cancelDownloadExcel() {
+          this.showDownloadExcelDialog = false;
+        },
         downloadExcel() {
           if (!ipcRenderer) {
             alert('请在Electron环境下使用此功能');
             return;
           }
           if (this.excelFilePath === '') {
-            alert("请先做人脸对比！");
+            alert("获取Excel文件失败！");
             return;
           }
           console.log('下载Excel文件:', this.excelFilePath);
@@ -1162,16 +1338,6 @@
       },
       async mounted() {
         this.startCamera();
-        if (this.excelFilePath === '') {
-          try {
-            const res2 = await axios.get("http://localhost:8080/download_result");
-            this.excelFilePath = res2.data;
-          } catch (e) {
-            // 请求失败时不影响页面渲染，可选：console.warn 或提示
-            console.warn('获取Excel路径失败:', e.message);
-            this.excelFilePath = '';
-          }
-        }
       },
       async created() {
         // Electron主进程图片保存回调
